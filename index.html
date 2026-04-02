@@ -3,98 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI หมาคับ - Welcome</title>
+    <title>AI หมาคับ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f0f2f5; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 80%; max-width: 400px; }
-        #status { color: #333; font-size: 1.5rem; margin-bottom: 10px; }
-        #sub-text { color: #666; margin-bottom: 20px; }
-        /* ปุ่มส่งข้อความ */
+        body { font-family: sans-serif; text-align: center; padding: 50px 20px; background-color: #f4f7f9; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
+        h2 { color: #333; margin-bottom: 10px; font-size: 1.4rem; }
+        p { color: #666; font-size: 1rem; line-height: 1.5; }
         .btn-send { 
-            display: none; /* ปิดไว้ก่อน จะเปิดเมื่อเป็นเพื่อนแล้ว */
+            display: none; 
             background-color: #00b900; 
             color: white; 
             border: none; 
-            padding: 15px 25px; 
-            border-radius: 30px; 
+            padding: 16px 20px; 
+            border-radius: 50px; 
             font-size: 18px; 
             font-weight: bold; 
             cursor: pointer; 
             width: 100%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            box-shadow: 0 4px 12px rgba(0,185,0,0.3);
+            transition: all 0.2s;
         }
-        .btn-send:active { background-color: #009e00; transform: scale(0.98); }
-        #error-log { color: #dc3545; font-size: 0.8rem; margin-top: 20px; display: none; background: #fff1f0; padding: 10px; border-radius: 8px; }
+        .btn-send:active { transform: scale(0.95); opacity: 0.9; }
+        #debug { font-size: 10px; color: #ccc; margin-top: 30px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2 id="status">กำลังตรวจสอบ...</h2>
-        <p id="sub-text">โปรดรอสักครู่ ระบบกำลังทำงาน</p>
+        <h2 id="status">กำลังโหลด...</h2>
+        <p id="sub-text">กรุณารอสักครู่</p>
         
-        <button id="send-btn" class="btn-send" onclick="sendMessage()">ส่งข้อความหา AI หมาคับ</button>
-
-        <div id="error-log">
-            <strong>Debug Info:</strong> <span id="err-text"></span>
-        </div>
+        <button id="send-btn" class="btn-send" onclick="sendMessage()">
+            กดเพื่อส่งข้อความเข้าแชท
+        </button>
     </div>
+
+    <div id="debug">System Ready</div>
 
     <script>
         async function main() {
             const statusEl = document.getElementById('status');
             const subTextEl = document.getElementById('sub-text');
-            const sendBtn = document.getElementById('send-btn');
-            const errLog = document.getElementById('error-log');
-            const errText = document.getElementById('err-text');
+            const btn = document.getElementById('send-btn');
 
             try {
-                // 1. เชื่อมต่อ LIFF
+                // 1. เริ่มระบบ LIFF
                 await liff.init({ liffId: "2009681507-7NYat0hP" });
 
                 // 2. เช็ค Login
                 if (!liff.isLoggedIn()) {
                     liff.login();
-                } else {
-                    // 3. เช็คสถานะเพื่อน
-                    const friendship = await liff.getFriendship();
-                    
-                    if (friendship.friendFlag) {
-                        // --- กรณีเป็นเพื่อนแล้ว ---
-                        statusEl.innerText = "เราเป็นเพื่อนกันแล้ว!";
-                        subTextEl.innerText = "กดปุ่มด้านล่างเพื่อส่งข้อความเข้าแชทและเริ่มใช้งานได้เลย";
-                        sendBtn.style.display = "block"; // แสดงปุ่ม
-                    } else {
-                        // --- กรณีที่ยังไม่เป็นเพื่อน ---
-                        statusEl.innerText = "คุณยังไม่ได้เพิ่มเพื่อน";
-                        subTextEl.innerText = "กำลังเปิดหน้าต่างขอเพิ่มเพื่อน...";
-                        await liff.requestFriendship();
-                        // หลังจากปิดหน้าต่าง ให้โหลดใหม่เพื่อเข้าเงื่อนไข "เป็นเพื่อนแล้ว"
-                        setTimeout(() => { location.reload(); }, 1000);
-                    }
+                    return;
                 }
+
+                // 3. เช็คสถานะเพื่อน
+                const friendship = await liff.getFriendship();
+                
+                if (friendship.friendFlag) {
+                    // เป็นเพื่อนแล้ว -> โชว์ปุ่ม
+                    statusEl.innerText = "เราเป็นเพื่อนกันแล้ว!";
+                    subTextEl.innerText = "กดปุ่มเขียวด้านล่าง เพื่อส่งข้อความทักทายในแชทได้เลยครับ";
+                    btn.style.display = "block"; 
+                } else {
+                    // ยังไม่เป็นเพื่อน -> ขอแอดเพื่อน
+                    statusEl.innerText = "ยังไม่ได้เพิ่มเพื่อน";
+                    subTextEl.innerText = "กำลังเปิดหน้าต่างเพิ่มเพื่อน...";
+                    await liff.requestFriendship();
+                    // หลังจากปิดหน้าต่างแอดเพื่อน ให้รีโหลดหน้าเพื่อเช็คใหม่
+                    location.reload();
+                }
+
             } catch (err) {
                 statusEl.innerText = "เกิดข้อผิดพลาด";
-                errLog.style.display = "block";
-                errText.innerText = err.message;
+                subTextEl.innerText = err.message;
                 console.error(err);
             }
         }
 
-        // ฟังก์ชันส่งข้อความ
         async function sendMessage() {
             try {
+                // ส่งข้อความเข้าแชท
                 await liff.sendMessages([
                     {
                         type: 'text',
-                        text: 'สวัสดีครับ AI หมาคับ! (ส่งจาก LIFF)'
+                        text: 'สวัสดีครับ AI หมาคับ! ยินดีที่ได้รู้จักครับ'
                     }
                 ]);
-                // ส่งเสร็จแล้วปิดหน้าเว็บทันทีเพื่อกลับไปหน้าแชท
+                // ส่งเสร็จแล้วปิดหน้า LIFF ทันที
                 liff.closeWindow();
             } catch (err) {
-                alert("ส่งไม่สำเร็จ: " + err.message + "\n(อย่าลืมเปิดสิทธิ์ chat_message.write ใน LINE Developers)");
+                alert("ส่งข้อความไม่ได้: " + err.message);
             }
         }
 
