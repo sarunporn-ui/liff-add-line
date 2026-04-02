@@ -1,53 +1,78 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI หมาคับ - Test</title>
+    <title>AI หมาคับ - Friend Check</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f8f9fa; }
+        .container { padding: 20px; border-radius: 10px; background: white; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #status { color: #28a745; font-size: 1.2rem; margin-bottom: 10px; }
+        #error-log { color: #dc3545; font-size: 0.9rem; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; display: none; }
+    </style>
 </head>
 <body>
-    <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
-        <h1 id="status">กำลังโหลดระบบ...</h1>
-        <p>หากหน้าจอนี้ไม่หายไป กรุณาลองเปิดในแอป LINE</p>
+
+    <div class="container">
+        <h2 id="status">กำลังเริ่มต้นระบบ...</h2>
+        <p id="sub-status">กรุณารอสักครู่ ระบบกำลังสื่อสารกับ LINE</p>
+        
+        <div id="error-log">
+            <strong>Debug Info:</strong> <br>
+            <span id="err-text"></span>
+        </div>
     </div>
 
     <script>
-    async function main() {
-        const statusEl = document.getElementById('status');
-        try {
-            // 2. ใส่ LIFF ID เต็มของคุณ
-            await liff.init({ liffId: "2009681507-7NYat0hP" });
+        async function main() {
+            const statusEl = document.getElementById('status');
+            const subStatusEl = document.getElementById('sub-status');
+            const errLog = document.getElementById('error-log');
+            const errText = document.getElementById('err-text');
 
-            if (liff.isLoggedIn()) {
-                statusEl.innerText = "กำลังตรวจสอบการเป็นเพื่อน...";
-                
-                // 3. เช็คสถานะเพื่อน
-                const friendship = await liff.getFriendship();
-                
-                if (!friendship.friendFlag) {
-                    // ถ้ายังไม่เป็นเพื่อน ให้เด้งหน้าต่างแอดเพื่อน
-                    await liff.requestFriendship();
-                    
-                    // เมื่อหน้าต่างแอดเพื่อนปิดลง ให้เช็คอีกรอบ
-                    const verify = await liff.getFriendship();
-                    if (verify.friendFlag) {
-                        statusEl.innerText = "แอดเพื่อนสำเร็จแล้ว! ยินดีต้อนรับครับ";
-                    }
+            try {
+                // 1. เริ่มต้น LIFF (เช็ค ID จากหน้าจอคุณ 2009681507-7NYat0hP)
+                await liff.init({ liffId: "2009681507-7NYat0hP" });
+                statusEl.innerText = "เชื่อมต่อ LINE สำเร็จ";
+
+                // 2. เช็คการ Login
+                if (!liff.isLoggedIn()) {
+                    subStatusEl.innerText = "กำลังพาคุณไปหน้า Login...";
+                    liff.login();
                 } else {
-                    statusEl.innerText = "เราเป็นเพื่อนกันแล้ว! ขอบคุณครับ";
+                    statusEl.innerText = "กำลังตรวจสอบสถานะเพื่อน...";
+                    
+                    // 3. เช็คว่าเป็นเพื่อนกับ OA หรือยัง (Linked OA ต้อง Update แล้ว)
+                    const friendship = await liff.getFriendship();
+                    
+                    if (friendship.friendFlag) {
+                        statusEl.innerText = "เราเป็นเพื่อนกันแล้ว!";
+                        subStatusEl.innerText = "ยินดีต้อนรับสู่ AI หมาคับ ครับ";
+                    } else {
+                        statusEl.innerText = "คุณยังไม่ได้เพิ่มเพื่อน";
+                        subStatusEl.innerText = "กำลังเปิดหน้าต่างขอเพิ่มเพื่อน...";
+                        
+                        // 4. สั่งเด้งหน้าต่างเพิ่มเพื่อน
+                        await liff.requestFriendship();
+                        
+                        // เมื่อปิดหน้าต่างให้รีเฟรชหน้าเพื่อเช็คสถานะใหม่
+                        setTimeout(() => { location.reload(); }, 2000);
+                    }
                 }
-            } else {
-                // ถ้าเปิดนอก LINE ให้ Login ก่อน
-                liff.login();
+            } catch (err) {
+                statusEl.innerText = "เกิดข้อผิดพลาด";
+                statusEl.style.color = "red";
+                subStatusEl.innerText = "ไม่สามารถโหลดข้อมูลได้";
+                
+                // แสดงรายละเอียด Error บนหน้าจอ
+                errLog.style.display = "block";
+                errText.innerText = err.code + ": " + err.message;
+                console.error(err);
             }
-        } catch (err) {
-            statusEl.innerText = "เกิดข้อผิดพลาดในการโหลด";
-            console.error(err);
         }
-    }
 
-    main();
-    </script> 
+        main();
+    </script>
 </body>
 </html>
