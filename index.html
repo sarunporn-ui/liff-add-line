@@ -1,44 +1,34 @@
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+    <h1 id="status">กำลังตรวจสอบ...</h1>
+    <script>
+        async function main() {
+            try {
+                // ใส่ ID ให้ถูกต้อง
+                await liff.init({ liffId: "2009681507-7NYat0hP" });
 
-<script>
-
-// ฟังก์ชันหลักที่ทำงานตอนโหลดหน้าเว็บ
-async function main() {
-    try {
-        // 1. เชื่อมต่อกับระบบ LIFF (เอา ID จากหน้า Line Developers มาใส่)
-        await liff.init({ liffId: "2009680653" });
-
-        // 2. เช็คว่าล็อกอินหรือยัง (ถ้าเปิดใน LINE มักจะล็อกอินอัตโนมัติ)
-        if (liff.isLoggedIn()) {
-            
-            // --- ตรงนี้คือโค้ดที่คุณแคปรูปมาให้ดู ---
-            const friendship = await liff.getFriendship();
-            
-            if (!friendship.friendFlag) {
-                // ถ้ายังไม่เป็นเพื่อน ให้เด้งหน้าต่างขอแอดเพื่อน
-                await liff.requestFriendship();
-                
-                // หลังจากหน้าต่างปิดลง เช็คอีกรอบ (เผื่อเขาเปลี่ยนใจกดเพิ่ม)
-                const verifyFriendship = await liff.getFriendship();
-                if (verifyFriendship.friendFlag) {
-                    alert("ขอบคุณที่แอดเราเป็นเพื่อน! เข้าสู่เกมได้เลย");
+                if (!liff.isLoggedIn()) {
+                    liff.login();
                 } else {
-                    alert("คุณยังไม่ได้แอดเราน้า ลองใหม่อีกครั้งนะครับ");
+                    const friendship = await liff.getFriendship();
+                    if (!friendship.friendFlag) {
+                        // ถ้ายังไม่เป็นเพื่อน ให้เด้งหน้าต่างขอเพิ่มเพื่อน
+                        await liff.requestFriendship();
+                    } else {
+                        document.getElementById('status').innerText = "เราเป็นเพื่อนกันแล้ว!";
+                    }
                 }
-            } else {
-                console.log("คุณเป็นเพื่อนกับเราอยู่แล้ว ยินดีต้อนรับกลับครับ!");
+            } catch (err) {
+                console.error(err);
             }
-            // ---------------------------------------
-
-        } else {
-            // ถ้าเปิดนอกแอป LINE ให้เด้งหน้า Login
-            liff.login();
         }
-    } catch (err) {
-        console.error("เกิดข้อผิดพลาด:", err);
-    }
-}
-
-// เรียกใช้งานฟังก์ชัน
-main();
-<script>
+        main();
+    </script>
+</body>
+</html>
