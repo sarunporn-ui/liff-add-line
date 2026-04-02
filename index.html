@@ -3,66 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI หมาคับ - Welcome</title>
+    <title>AI หมาคับ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f0f2f5; }
-        .card { background: white; padding: 30px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 80%; }
-        .btn { background-color: #00b900; color: white; border: none; padding: 12px 25px; border-radius: 25px; font-size: 16px; cursor: pointer; margin-top: 20px; font-weight: bold; text-decoration: none; display: none; }
-        .btn:active { background-color: #009e00; }
-        #status { color: #333; margin-bottom: 10px; }
-    </style>
+        .card { background: white; padding: 30px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 80%; }
+        /* ตั้งค่าปุ่มให้เห็นชัดเจน */
+        .btn { 
+            display: none; 
+            background-color: #00b900; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            border-radius: 30px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 20px; 
+            width: 100%;
+        }
+    </script>
 </head>
 <body>
 
     <div class="card">
-        <h2 id="status">กำลังโหลด...</h2>
+        <h2 id="status">กำลังตรวจสอบ...</h2>
         <p id="sub-text">โปรดรอสักครู่</p>
-        
-        <button id="send-btn" class="btn" onclick="sendMessage()">ส่งข้อความหาหมาคับ</button>
+        <button id="send-btn" class="btn" onclick="sendMessage()">กดส่งข้อความหา AI หมาคับ</button>
     </div>
 
     <script>
         async function main() {
             try {
+                // ใช้ ID ของคุณ
                 await liff.init({ liffId: "2009681507-7NYat0hP" });
 
                 if (!liff.isLoggedIn()) {
                     liff.login();
                 } else {
                     const friendship = await liff.getFriendship();
-                    
+                    const btn = document.getElementById('send-btn');
+                    const status = document.getElementById('status');
+                    const subText = document.getElementById('sub-text');
+
                     if (friendship.friendFlag) {
-                        // --- กรณีเป็นเพื่อนแล้ว ---
-                        document.getElementById('status').innerText = "ยินดีต้อนรับกลับ!";
-                        document.getElementById('sub-text').innerText = "คุณเป็นเพื่อนกับเราแล้ว กดปุ่มด้านล่างเพื่อเริ่มคุย";
-                        document.getElementById('send-btn').style.display = "inline-block";
+                        status.innerText = "เราเป็นเพื่อนกันแล้ว!";
+                        subText.innerText = "แตะที่ปุ่มด้านล่างเพื่อเริ่มคุยกับเรา";
+                        // บังคับให้ปุ่มแสดงผล
+                        btn.style.setProperty('display', 'block', 'important');
                     } else {
-                        // --- กรณีที่ยังไม่เป็นเพื่อน ---
-                        document.getElementById('status').innerText = "คุณยังไม่ได้เพิ่มเพื่อน";
+                        status.innerText = "ยังไม่ได้เพิ่มเพื่อน";
                         await liff.requestFriendship();
-                        location.reload(); // พอแอดเสร็จให้รีเฟรชมาหน้า "ยินดีต้อนรับกลับ"
+                        location.reload(); 
                     }
                 }
             } catch (err) {
+                document.getElementById('status').innerText = "เกิดข้อผิดพลาด";
                 console.error(err);
             }
         }
 
-        // ฟังก์ชันส่งข้อความเข้าแชท
         async function sendMessage() {
             try {
-                // ส่งข้อความในนามของ User
-                await liff.sendMessages([
-                    {
-                        type: 'text',
-                        text: 'สวัสดีครับ AI หมาคับ! (ส่งจาก LIFF)'
-                    }
-                ]);
-                // พอกดส่งเสร็จ ให้ปิดหน้า LIFF ทันทีเพื่อกลับไปที่หน้าแชท
-                liff.closeWindow();
+                await liff.sendMessages([{ type: 'text', text: 'สวัสดีครับ AI หมาคับ' }]);
+                liff.closeWindow(); 
             } catch (err) {
-                alert("เกิดข้อผิดพลาด: " + err.message);
+                alert("ส่งไม่สำเร็จ: " + err.message);
             }
         }
 
