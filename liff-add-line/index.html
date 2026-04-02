@@ -6,7 +6,7 @@
 async function main() {
     try {
         // 1. เชื่อมต่อกับระบบ LIFF (เอา ID จากหน้า Line Developers มาใส่)
-        await liff.init({ liffId: "ใส่-LIFF-ID-ของคุณ-ตรงนี้" });
+        await liff.init({ liffId: "2009680653" });
 
         // 2. เช็คว่าล็อกอินหรือยัง (ถ้าเปิดใน LINE มักจะล็อกอินอัตโนมัติ)
         if (liff.isLoggedIn()) {
