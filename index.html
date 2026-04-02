@@ -3,32 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI หมาคับ - Test</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
-    <h1 id="status">กำลังตรวจสอบ...</h1>
-    <script>
-        async function main() {
-            try {
-                // ใส่ ID ให้ถูกต้อง
-                await liff.init({ liffId: "2009681507-7NYat0hP" });
+    <div style="text-align: center; margin-top: 50px; font-family: sans-serif;">
+        <h1 id="status">กำลังโหลดระบบ...</h1>
+        <p>หากหน้าจอนี้ไม่หายไป กรุณาลองเปิดในแอป LINE</p>
+    </div>
 
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                } else {
-                    const friendship = await liff.getFriendship();
-                    if (!friendship.friendFlag) {
-                        // ถ้ายังไม่เป็นเพื่อน ให้เด้งหน้าต่างขอเพิ่มเพื่อน
-                        await liff.requestFriendship();
-                    } else {
-                        document.getElementById('status').innerText = "เราเป็นเพื่อนกันแล้ว!";
+    <script>
+    async function main() {
+        const statusEl = document.getElementById('status');
+        try {
+            // 2. ใส่ LIFF ID เต็มของคุณ
+            await liff.init({ liffId: "2009681507-7NYat0hP" });
+
+            if (liff.isLoggedIn()) {
+                statusEl.innerText = "กำลังตรวจสอบการเป็นเพื่อน...";
+                
+                // 3. เช็คสถานะเพื่อน
+                const friendship = await liff.getFriendship();
+                
+                if (!friendship.friendFlag) {
+                    // ถ้ายังไม่เป็นเพื่อน ให้เด้งหน้าต่างแอดเพื่อน
+                    await liff.requestFriendship();
+                    
+                    // เมื่อหน้าต่างแอดเพื่อนปิดลง ให้เช็คอีกรอบ
+                    const verify = await liff.getFriendship();
+                    if (verify.friendFlag) {
+                        statusEl.innerText = "แอดเพื่อนสำเร็จแล้ว! ยินดีต้อนรับครับ";
                     }
+                } else {
+                    statusEl.innerText = "เราเป็นเพื่อนกันแล้ว! ขอบคุณครับ";
                 }
-            } catch (err) {
-                console.error(err);
+            } else {
+                // ถ้าเปิดนอก LINE ให้ Login ก่อน
+                liff.login();
             }
+        } catch (err) {
+            statusEl.innerText = "เกิดข้อผิดพลาดในการโหลด";
+            console.error(err);
         }
-        main();
-    </script>
+    }
+
+    main();
+    </script> 
 </body>
 </html>
