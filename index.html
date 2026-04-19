@@ -28,17 +28,28 @@
         <button id="send-btn" class="btn-send">กดเพื่อทักทาย AI หมาคับ</button>
     </div>
 
-    <div id="debug">System Ready | Direct OA Mode</div>
+    <div id="debug">System Ready | Tracking Mode</div>
 
     <script>
-        // 1. ตั้งค่าพื้นฐาน
         const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx2ZvopbW0JqRyDHL_SLthsx98ZcBQ2L9YdBQGVi3ukRMTQoulBr95X4k-4rgTQ11tmLw/exec"; 
-        const LINE_OA_ID = "@686skven"; // อัปเดต LINE OA ID แล้ว
+        const LINE_OA_ID = "@686skven"; 
 
         const statusEl = document.getElementById('status');
         const subTextEl = document.getElementById('sub-text');
         const btn = document.getElementById('send-btn');
         const profileImg = document.getElementById('profile-img');
+
+        // --- ระบบดึงค่าพารามิเตอร์ (Tracking Source) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        let trackingSource = urlParams.get('ref');
+
+        // เก็บลง Session Storage เผื่อหน้าเว็บถูก Reload
+        if (trackingSource) {
+            sessionStorage.setItem('liff_source', trackingSource);
+        } else {
+            trackingSource = sessionStorage.getItem('liff_source') || 'Organic / No Ref';
+        }
+        // ---------------------------------------------
 
         async function main() {
             try {
@@ -74,12 +85,9 @@
             }
         }
 
-        // ฟังก์ชันใหม่: บังคับให้เปิดแชทของ OA โดยตรง
         function redirectToOA() {
             const message = "สวัสดีครับ AI หมาคับ! ยินดีที่ได้รู้จักครับ 🐶";
             const encodedMsg = encodeURIComponent(message);
-            
-            // ใช้ LINE URL Scheme บังคับเปิดแชท OA พร้อมข้อความ
             window.location.href = `https://line.me/R/oaMessage/${LINE_OA_ID}/?${encodedMsg}`;
         }
 
@@ -87,7 +95,8 @@
             const data = {
                 userId: profile.userId,
                 displayName: profile.displayName,
-                pictureUrl: profile.pictureUrl
+                pictureUrl: profile.pictureUrl,
+                source: trackingSource // ส่งแหล่งที่มาไปบันทึก
             };
             fetch(GOOGLE_SHEET_WEB_APP_URL, {
                 method: 'POST',
