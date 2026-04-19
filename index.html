@@ -6,10 +6,41 @@
     <title>AI หมาคับ</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px 20px; background-color: #f4f7f9; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
-        h2 { color: #333; margin-bottom: 10px; font-size: 1.4rem; }
-        p { color: #666; font-size: 1rem; line-height: 1.5; }
+        body { 
+            font-family: sans-serif; 
+            text-align: center; 
+            padding: 50px 20px; 
+            background-color: #f4f7f9; 
+            margin: 0; 
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 20px; 
+            display: inline-block; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            width: 100%; 
+            max-width: 350px; 
+        }
+        h2 { 
+            color: #333; 
+            margin-bottom: 10px; 
+            font-size: 1.4rem; 
+        }
+        p { 
+            color: #666; 
+            font-size: 1rem; 
+            line-height: 1.5; 
+        }
+        .profile-img { 
+            width: 80px; 
+            height: 80px; 
+            border-radius: 50%; 
+            display: none; 
+            margin: 0 auto 15px auto; 
+            object-fit: cover; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
         .btn-send { 
             display: none; 
             background-color: #00b900; 
@@ -20,34 +51,47 @@
             font-size: 18px; 
             font-weight: bold; 
             cursor: pointer; 
-            width: 100%;
-            margin-top: 20px;
+            width: 100%; 
+            margin-top: 20px; 
             box-shadow: 0 4px 12px rgba(0,185,0,0.3);
             transition: all 0.2s;
         }
-        .btn-send:active { transform: scale(0.95); opacity: 0.9; }
-        #debug { font-size: 10px; color: #ccc; margin-top: 30px; }
+        .btn-send:active { 
+            transform: scale(0.95); 
+            opacity: 0.9; 
+        }
+        #debug { 
+            font-size: 10px; 
+            color: #ccc; 
+            margin-top: 30px; 
+        }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2 id="status">กำลังโหลด...</h2>
+        <img id="profile-img" class="profile-img" src="" alt="Profile">
+        
+        <h2 id="status">กำลังโหลดระบบ...</h2>
         <p id="sub-text">กรุณารอสักครู่</p>
         
-        <button id="send-btn" class="btn-send" onclick="sendMessage()">
+        <button id="send-btn" class="btn-send">
             กดเพื่อส่งข้อความเข้าแชท
         </button>
     </div>
 
-    <div id="debug">System Ready</div>
+    <div id="debug">System Ready | v1.2</div>
 
     <script>
-        async function main() {
-            const statusEl = document.getElementById('status');
-            const subTextEl = document.getElementById('sub-text');
-            const btn = document.getElementById('send-btn');
+        // ใส่ URL Web App ของคุณ
+        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx2ZvopbW0JqRyDHL_SLthsx98ZcBQ2L9YdBQGVi3ukRMTQoulBr95X4k-4rgTQ11tmLw/exec"; 
 
+        const statusEl = document.getElementById('status');
+        const subTextEl = document.getElementById('sub-text');
+        const btn = document.getElementById('send-btn');
+        const profileImg = document.getElementById('profile-img');
+
+        async function main() {
             try {
                 // 1. เริ่มระบบ LIFF
                 await liff.init({ liffId: "2009681507-7NYat0hP" });
@@ -62,42 +106,73 @@
                 const friendship = await liff.getFriendship();
                 
                 if (friendship.friendFlag) {
-                    // เป็นเพื่อนแล้ว -> โชว์ปุ่ม
-                    statusEl.innerText = "เราเป็นเพื่อนกันแล้ว!";
+                    // เป็นเพื่อนแล้ว -> ดึงข้อมูลโปรไฟล์
+                    const profile = await liff.getProfile();
+                    
+                    // อัปเดตหน้าจอให้แสดงข้อมูลผู้ใช้
+                    profileImg.src = profile.pictureUrl;
+                    profileImg.style.display = "block";
+                    statusEl.innerText = `สวัสดีคุณ ${profile.displayName}`;
                     subTextEl.innerText = "กดปุ่มเขียวด้านล่าง เพื่อส่งข้อความทักทายในแชทได้เลยครับ";
+                    
+                    // แสดงปุ่มส่งข้อความ
                     btn.style.display = "block"; 
+                    btn.onclick = sendMessage;
+
+                    // 4. ส่งข้อมูลโปรไฟล์ไปเก็บบน Google Sheet
+                    saveDataToGoogleSheet(profile);
+
                 } else {
-                    // ยังไม่เป็นเพื่อน -> ขอแอดเพื่อน
+                    // ยังไม่เป็นเพื่อน -> เด้ง Pop-up ขอเพิ่มเพื่อน
                     statusEl.innerText = "ยังไม่ได้เพิ่มเพื่อน";
                     subTextEl.innerText = "กำลังเปิดหน้าต่างเพิ่มเพื่อน...";
                     await liff.requestFriendship();
-                    // หลังจากปิดหน้าต่างแอดเพื่อน ให้รีโหลดหน้าเพื่อเช็คใหม่
+                    
+                    // รีโหลดหน้าใหม่เพื่อตรวจสอบสถานะอีกครั้ง
                     location.reload();
                 }
 
             } catch (err) {
                 statusEl.innerText = "เกิดข้อผิดพลาด";
                 subTextEl.innerText = err.message;
-                console.error(err);
+                console.error("LIFF Error:", err);
             }
         }
 
+        // ฟังก์ชันส่งข้อมูลไป Google Sheet ผ่าน Web App URL
+        function saveDataToGoogleSheet(profile) {
+            const data = {
+                userId: profile.userId,
+                displayName: profile.displayName,
+                pictureUrl: profile.pictureUrl
+            };
+
+            fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain ป้องกันปัญหา CORS
+            }).then(response => response.json())
+              .then(result => console.log("บันทึกข้อมูลสำเร็จ:", result))
+              .catch(error => console.error("บันทึกข้อมูลไม่สำเร็จ:", error));
+        }
+
+        // ฟังก์ชันสำหรับกดส่งข้อความเข้าแชท
         async function sendMessage() {
             try {
-                // ส่งข้อความเข้าแชท
                 await liff.sendMessages([
                     {
                         type: 'text',
-                        text: 'สวัสดีครับ AI หมาคับ! ยินดีที่ได้รู้จักครับ'
+                        text: 'สวัสดีครับ AI หมาคับ! ยินดีที่ได้รู้จักครับ 🐶'
                     }
                 ]);
-                // ส่งเสร็จแล้วปิดหน้า LIFF ทันที
+                // ส่งเสร็จแล้วให้ปิดหน้าต่าง LIFF
                 liff.closeWindow();
             } catch (err) {
                 alert("ส่งข้อความไม่ได้: " + err.message);
             }
         }
 
+        // เริ่มการทำงาน
         main();
     </script>
 </body>
