@@ -41,7 +41,7 @@
 
         // --- ระบบดึงค่าพารามิเตอร์ (Tracking Source) ---
         const urlParams = new URLSearchParams(window.location.search);
-        let trackingSource = urlParams.get('ref');
+        let trackingSource = urlParams.get('source');
 
         // เก็บลง Session Storage เผื่อหน้าเว็บถูก Reload
         if (trackingSource) {
